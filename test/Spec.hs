@@ -40,5 +40,13 @@ main = do
         $ matchRule (Sequence [Literal "1", Literal "2", Literal "3"]) "132."
     assertEq "sequence doesn't match too-short sequence" (Nothing)
         $ matchRule (Sequence [Literal "1", Literal "2", Literal "3"]) "12"
+    assertEq "ZeroOrMore matches nothing" (Just "")
+        $ matchRule (ZeroOrMore $ Literal "1") ""
+    assertEq "ZeroOrMore matches nothing and returns remainder" (Just "23")
+        $ matchRule (ZeroOrMore $ Literal "1") "23"
+    assertEq "OneOrMore requires at least one" (Nothing)
+        $ matchRule (OneOrMore $ Literal "1") "23"
+    assertEq "OneOrMore is greedy" (Just "23")
+        $ matchRule (OneOrMore $ Literal "1") "1111123"
     assert "arithmeticGrammar matches basic string"
-        $ matches arithmeticGrammar "1 + 2 - 3"
+        $ matches arithmeticGrammar "1+2-3"
