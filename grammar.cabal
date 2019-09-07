@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 7f3f8751996ee859232d4b6cbedd277113ff330193d8d530b9d57b3fbb127e5c
+-- hash: d93b95efd40ff1c024b0d18a2ef025dd2ece4919992b92813b14997a82de7001
 
 name:           grammar
 version:        0.1.0
@@ -18,8 +18,7 @@ license:        BSD3
 license-file:   LICENSE
 build-type:     Simple
 extra-source-files:
-    README.md
-    ChangeLog.md
+    README
 
 source-repository head
   type: git
