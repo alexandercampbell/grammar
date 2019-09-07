@@ -1,5 +1,7 @@
 module Grammar where
 
+import           Data.List
+
 data Rule
     = Literal String
     | OneOrMore Rule
@@ -12,9 +14,17 @@ data Grammar = Grammar
     }
     deriving (Eq, Show)
 
-matchRule :: Rule -> String -> Bool
-matchRule (Literal     l   ) s = l == s
-matchRule (Disjunction list) s = any id $ map (\r -> matchRule r s) list
+-- Return the remainder of the string in the case that a match is made;
+-- otherwise, return Nothing
+matchRule :: Rule -> String -> Maybe String
+matchRule (Literal l) s =
+    if isPrefixOf l s then Just $ drop (length l) s else Nothing
+matchRule (Disjunction possibles) s =
+    head $ filter (/= Nothing) $ map (\r -> matchRule r s) possibles
+matchRule (Sequence []              ) s = Just s
+matchRule (Sequence (first : others)) s = case matchRule first s of
+    Just remainder -> matchRule (Sequence others) remainder
+    Nothing        -> Nothing
 
 matches :: Grammar -> String -> Bool
 matches grammar str = False
