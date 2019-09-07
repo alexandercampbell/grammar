@@ -21,11 +21,36 @@ assertEq msg expected actual = if expected == actual
         ++ ", actual "
         ++ show actual
 
-arithmeticGrammar =
+simpleArithmeticGrammar =
     let number = OneOrMore $ Disjunction $ map (Literal . show) [0 .. 9]
         plus   = Sequence [number, Literal "+", expr]
         minus  = Sequence [number, Literal "-", expr]
         expr   = Disjunction [plus, minus, number]
+    in  Grammar { start = expr }
+
+advancedArithmeticGrammar =
+    let whitespace = ZeroOrMore $ Literal " "
+        number     = Sequence
+            [ OneOrMore $ Disjunction $ map (Literal . show) [0 .. 9]
+            -- optional scientific notation
+            , Optional $ Sequence
+                [ Disjunction [Literal "e", Literal "E"]
+                , Optional $ Literal "-"
+                , OneOrMore $ Disjunction $ map (Literal . show) [0 .. 9]
+                ]
+            ]
+        term = Disjunction
+            [ Sequence [whitespace, number, whitespace]
+            , Sequence [whitespace, Literal "(", expr, Literal ")", whitespace]
+            ]
+        expr = Disjunction
+            [ Sequence [term, Literal "+", expr]
+            , Sequence [term, Literal "-", expr]
+            , Sequence [term, Literal "*", expr]
+            , Sequence [term, Literal "/", expr]
+            , Sequence [term, Literal "^", expr]
+            , term
+            ]
     in  Grammar { start = expr }
 
 main :: IO ()
@@ -48,5 +73,32 @@ main = do
         $ matchRule (OneOrMore $ Literal "1") "23"
     assertEq "OneOrMore is greedy" (Just "23")
         $ matchRule (OneOrMore $ Literal "1") "1111123"
-    assert "arithmeticGrammar matches basic string"
-        $ matches arithmeticGrammar "1+2-3"
+    assert "simpleArithmeticGrammar matches 4"
+        $ matches simpleArithmeticGrammar "4"
+    assert "simpleArithmeticGrammar matches 1+2-32"
+        $ matches simpleArithmeticGrammar "1+2-32"
+    assert "simpleArithmeticGrammar doesn't match text" $ not $ matches
+        simpleArithmeticGrammar
+        "text"
+    assert "advancedArithmeticGrammar matches 1e9"
+        $ matches advancedArithmeticGrammar "1e9"
+    assert "advancedArithmeticGrammar matches 15e-7"
+        $ matches advancedArithmeticGrammar "15e-7"
+    assert "advancedArithmeticGrammar matches 1 + 2"
+        $ matches advancedArithmeticGrammar "1 + 2"
+    assert "advancedArithmeticGrammar matches (1 + 2)"
+        $ matches advancedArithmeticGrammar "(1 + 2)"
+    assert "advancedArithmeticGrammar matches (3e5 - 17)"
+        $ matches advancedArithmeticGrammar "(3e5 - 17)"
+    assert "advancedArithmeticGrammar matches 15 * (3e5 - 17)"
+        $ matches advancedArithmeticGrammar "15 * (3e5 - 17)"
+    assert "advancedArithmeticGrammar matches (3e5 - 17) * 15"
+        $ matches advancedArithmeticGrammar "(3e5 - 17) * 15"
+    assert "advancedArithmeticGrammar matches 1 + 2 * (3e5 - 17)"
+        $ matches advancedArithmeticGrammar "1 + 2 * (3e5 - 17)"
+    assert "advancedArithmeticGrammar fails to match 1 + + 2 * (3e5 - 17)"
+        $ not
+        $ matches advancedArithmeticGrammar "1 + + 2 * (3e5 - 17)"
+    assert "advancedArithmeticGrammar fails to match 1e7e3" $ not $ matches
+        advancedArithmeticGrammar
+        "1e7e3"

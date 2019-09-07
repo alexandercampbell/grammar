@@ -9,6 +9,7 @@ data Rule
     | OneOrMore Rule
     | Disjunction [Rule]
     | Sequence [Rule]
+    | Optional Rule
     deriving (Eq, Show)
 
 data Grammar = Grammar
@@ -35,6 +36,9 @@ matchRule (Sequence []              ) s = Just s
 matchRule (Sequence (first : others)) s = case matchRule first s of
     Just remainder -> matchRule (Sequence others) remainder
     Nothing        -> Nothing
+matchRule (Optional r) s = case matchRule r s of
+    Just remainder -> Just remainder
+    Nothing        -> Just s
 
 matches :: Grammar -> String -> Bool
 matches grammar str = matchRule (start grammar) str == Just ""
