@@ -38,6 +38,3 @@ matchRule (Sequence (first : others)) s = case matchRule first s of
 
 matches :: Grammar -> String -> Bool
 matches grammar str = matchRule (start grammar) str == Just ""
-
-someFunc :: IO ()
-someFunc = putStrLn "someFunc"
